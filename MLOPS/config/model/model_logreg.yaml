@@ -1,0 +1,5 @@
+name: model_logreg
+type: LogisticRegression
+params:
+  max_iter: 200
+output_dir: saved_models
