@@ -1,0 +1,32 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python src/processing.py
+    deps:
+    - path: data/raw/test.csv
+      hash: md5
+      md5: 029c9cd22461f6dbe8d9ab01def965c6
+      size: 28210
+      isexec: true
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 61fdd54abdbf6a85b778e937122e1194
+      size: 60302
+      isexec: true
+    - path: src/processing.py
+      hash: md5
+      md5: 07921184c34357723c98fa36cdb13f10
+      size: 1936
+    params:
+      params/base.yaml:
+        data.processed_dir: data/processed
+        data.raw_test_path: data/raw/test.csv
+        data.raw_train_path: data/raw/train.csv
+        data.test_processed: X_test.csv
+        data.train_processed: X_train.csv
+    outs:
+    - path: data/processed
+      hash: md5
+      md5: 0845f8b1cafb2f07243611fb7a147203.dir
+      size: 153818
+      nfiles: 3

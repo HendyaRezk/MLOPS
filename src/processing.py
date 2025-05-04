@@ -10,23 +10,24 @@ def preprocess_and_save():
     # Load config
     cfg = yaml.safe_load(open("params/base.yaml"))
     data_cfg = cfg["data"]
-    
-    # Load data
+
+    # Load raw data
     train_df = pd.read_csv(data_cfg["raw_train_path"])
     test_df = pd.read_csv(data_cfg["raw_test_path"])
 
     # Define features and target
-    features = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']  # Example features
+    features = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
     target = 'Survived'
-    
-    # Preprocessing pipeline
-    cat_cols = ['Sex', 'Embarked']  # Categorical columns
-    num_cols = ['Age', 'Fare', 'Pclass', 'SibSp', 'Parch']  # Numerical columns
 
+    # Split into categorical and numerical
+    cat_cols = ['Sex', 'Embarked']
+    num_cols = ['Age', 'Fare', 'Pclass', 'SibSp', 'Parch']
+
+    # Create preprocessing pipeline
     preprocessor = ColumnTransformer([
         ('cat', Pipeline([
             ('imputer', SimpleImputer(strategy='most_frequent')),
-            ('encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False))  # Updated here
+            ('encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
         ]), cat_cols),
         ('num', Pipeline([
             ('imputer', SimpleImputer(strategy='mean')),
@@ -34,27 +35,20 @@ def preprocess_and_save():
         ]), num_cols)
     ])
 
-    # Process data
+    # Process the features
     X_train = preprocessor.fit_transform(train_df[features])
     X_test = preprocessor.transform(test_df[features])
-    y_train = train_df[target]  # Target variable
+    y_train = train_df[target]
 
-    # Save processed data
+    # ✅ Ensure the output directory exists
     os.makedirs(data_cfg["processed_dir"], exist_ok=True)
-
-    # Save features
-    pd.DataFrame(X_train).to_csv(
-        os.path.join(data_cfg["processed_dir"], "X_train.csv"), 
-        index=False
-    )
-    pd.DataFrame(X_test).to_csv(
-        os.path.join(data_cfg["processed_dir"], "X_test.csv"), 
-        index=False
-    )
-    # Save target
-    y_train.to_csv(
-        os.path.join(data_cfg["processed_dir"], "y_train.csv"),
-        index=False
-    )
+    
+    # Save the processed feature and target datasets
+    pd.DataFrame(X_train).to_csv(os.path.join(data_cfg["processed_dir"], "X_train.csv"), index=False)
+    pd.DataFrame(X_test).to_csv(os.path.join(data_cfg["processed_dir"], "X_test.csv"), index=False)
+    y_train.to_csv(os.path.join(data_cfg["processed_dir"], "y_train.csv"), index=False)
 
     print("Preprocessing complete and data saved successfully!")
+
+if __name__ == "__main__":
+    preprocess_and_save()
