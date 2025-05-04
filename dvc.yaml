@@ -1,0 +1,42 @@
+vars:
+  - params/base.yaml
+
+stages:
+  preprocess:
+    cmd: python src/processing.py
+    deps:
+      - src/processing.py
+      - data/raw/train.csv
+      - data/raw/test.csv
+    outs:
+      - data/processed
+    params:
+      - data.raw_train_path
+      - data.raw_test_path
+      - data.processed_dir
+      - data.train_processed
+      - data.test_processed
+
+  train_rf:
+    cmd: python src/model.py --model-type rf
+    deps:
+      - src/model.py
+      - data/processed/train_processed.csv
+    outs:
+      - saved_models/model_rf.pkl
+    params:
+      - model.params
+    vars:
+      - params/models/rf.yaml
+
+  train_logreg:
+    cmd: python src/model.py --model-type logreg
+    deps:
+      - src/model.py
+      - data/processed/train_processed.csv
+    outs:
+      - saved_models/model_logreg.pkl
+    params:
+      - model.params
+    vars:
+      - params/models/logreg.yaml

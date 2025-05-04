@@ -1,0 +1,9 @@
+data:
+  raw_train_path: "data/raw/train.csv"
+  raw_test_path: "data/raw/test.csv"
+  processed_dir: "data/processed"
+  train_processed: "X_train.csv"  # Add these if missing
+  test_processed: "X_test.csv"
+  target_processed: "y_train.csv"
+model:
+  output_dir: "models"  # This was missing

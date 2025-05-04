@@ -1,8 +1,0 @@
-defaults:
-  - model: model_rf
-data:
-  raw_train_path: /teamspace/studios/this_studio/MLOPS/MLOPS/data/raw/train.csv
-  raw_test_path: /teamspace/studios/this_studio/MLOPS/MLOPS/data/raw/test.csv
-  processed_dir: processed
-  train_processed: processed/train_processed.csv
-  test_processed: processed/test_processed.csv
