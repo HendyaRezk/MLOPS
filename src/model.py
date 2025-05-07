@@ -1,44 +1,57 @@
-import joblib
 import os
+import joblib
 import pandas as pd
-import numpy as np  # Add this import
+import numpy as np
+import mlflow
+import dagshub
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import cross_val_score
+from dotenv import load_dotenv
+
+def init_mlflow():
+    load_dotenv()
+    dagshub.init(repo_owner='HendyaRezk', repo_name='MLOPS', mlflow=True)
+    mlflow.set_tracking_uri(os.getenv('https://dagshub.com/HendyaRezk/MLOPS.mlflow'))
+
+def load_data(data_path):
+    X_train = pd.read_csv(os.path.join(data_path, 'X_train.csv'))
+    y_train = pd.read_csv(os.path.join(data_path, 'y_train.csv')).values.ravel()
+    return X_train, y_train
 
 def train_and_save_models(model_cfg, processed_dir):
     try:
-        # Load processed data
-        X_train = pd.read_csv(os.path.join(processed_dir, 'X_train.csv'))
-        y_train = pd.read_csv(os.path.join(processed_dir, 'y_train.csv'))
+        init_mlflow()
+        mlflow.set_experiment("Titanic-Survival")
         
-        # Convert y_train to 1D array to avoid warning
-        y_train = np.ravel(y_train.values)  # Fix the error by importing numpy
+        X_train, y_train = load_data(processed_dir)
         
-        # Model selection and initialization
-        model_classes = {
-            "RandomForestClassifier": RandomForestClassifier,
-            "LogisticRegression": LogisticRegression
-        }
-        
-        model = model_classes[model_cfg['type']](**model_cfg.get('params', {}))
-        
-        # Train model with progress output
-        print("Training model...")
-        model.fit(X_train, y_train)
-        print("Training completed!")
-        
-        # Save model
-        os.makedirs(model_cfg['output_dir'], exist_ok=True)
-        model_path = os.path.join(model_cfg['output_dir'], f"{model_cfg['name']}.pkl")
-        joblib.dump(model, model_path)
-        
-        # Calculate and display training accuracy
-        train_acc = model.score(X_train, y_train)
-        print(f"\nModel saved to {model_path}")
-        print(f"Training accuracy: {train_acc:.2%}")
-        
-        return model_path
-        
+        with mlflow.start_run():
+            model = RandomForestClassifier(**model_cfg['params'])
+            model.fit(X_train, y_train)
+            
+            y_pred = model.predict(X_train)
+            acc = accuracy_score(y_train, y_pred)
+            cv_scores = cross_val_score(model, X_train, y_train, cv=5)
+            
+            mlflow.log_params(model_cfg['params'])
+            mlflow.log_metrics({
+                'accuracy': acc,
+                'cv_score_mean': cv_scores.mean(),
+                'cv_score_std': cv_scores.std()
+            })
+            
+            os.makedirs(model_cfg['output_dir'], exist_ok=True)
+            model_path = f"{model_cfg['output_dir']}/{model_cfg['name']}.pkl"
+            joblib.dump(model, model_path)
+            
+            mlflow.sklearn.log_model(model, "model")
+            mlflow.log_artifact(model_path)
+            
+            report = classification_report(y_train, y_pred, output_dict=True)
+            mlflow.log_dict(report, "classification_report.json")
+            
+            return model_path
+            
     except Exception as e:
         raise RuntimeError(f"Model training failed: {str(e)}")

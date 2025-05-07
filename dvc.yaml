@@ -16,4 +16,21 @@ stages:
           - data.train_processed
           - data.test_processed
     outs:
-      - data/processed
+      - data/processed/X_train.csv
+      - data/processed/y_train.csv
+      - data/processed/X_test.csv
+
+  train:
+    cmd: python src/Main.py rf  
+    deps:
+      - src/Main.py
+      - src/model.py
+      - data/processed/X_train.csv
+      - data/processed/y_train.csv
+    params:
+      - params/base.yaml
+      - params/models/rf.yaml
+    outs:
+      - models/*
+    metrics:
+      - metrics.json
